@@ -10,6 +10,7 @@ jobs:
   build-apk:
     name: Build CareCycle APK
     runs-on: ubuntu-latest
+
     steps:
       - name: Get the CareCycle files
         uses: actions/checkout@v4
@@ -42,6 +43,10 @@ jobs:
 
       - name: Prepare the Android app
         run: npx cap sync android
+
+      - name: Make Gradle executable
+        working-directory: android
+        run: chmod +x gradlew
 
       - name: Create the installable APK
         working-directory: android
