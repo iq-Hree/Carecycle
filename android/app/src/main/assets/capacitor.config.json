@@ -1,0 +1,14 @@
+{
+	"appId": "org.carecycle.app",
+	"appName": "CareCycle",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"LocalNotifications": {
+			"smallIcon": "ic_stat_carecycle",
+			"iconColor": "#183052"
+		}
+	}
+}

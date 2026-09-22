@@ -1,0 +1,55 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Build CareCycle APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the CareCycle files
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Java for Android
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Install and check the app
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run typecheck
+          pnpm run lint
+          pnpm test
+          pnpm run build
+
+      - name: Prepare the Android app
+        run: npx cap sync android
+
+      - name: Create the installable APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Save the APK for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: CareCycle-Android-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
