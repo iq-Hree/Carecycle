@@ -24,3 +24,5 @@
 .emergency-button{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;padding:10px 15px;background:#a52f48;color:#fff;text-decoration:none;font-weight:800}
 
 .back-button{border:0;background:transparent;color:#53667e;font-weight:800;padding:0 0 14px;font-size:14px}.back-button:hover{text-decoration:underline}:root[data-theme="dark"] .back-button{color:#b9c8d9}
+
+.phone-field{display:grid;grid-template-columns:minmax(150px,1.15fr) minmax(140px,1fr);gap:10px}.phone-field label{margin:16px 0!important}.field-help{display:block;margin:-6px 0 12px;line-height:1.45}@media(max-width:390px){.phone-field{grid-template-columns:1fr}.phone-field label{margin:8px 0!important}}
