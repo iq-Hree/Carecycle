@@ -16,197 +16,18 @@ const symptoms: Symptom[] = ['Cramps','Headache','Bloating','Breast tenderness',
 const greetingForHour = (hour: number) => hour >= 5 && hour < 12 ? 'Good morning' : hour >= 12 && hour < 17 ? 'Good afternoon' : hour >= 17 && hour < 21 ? 'Good evening' : 'Good night'
 const Nav = ({ tab, setTab }: {tab: Tab; setTab: (x: Tab) => void}) => <nav aria-label="Main navigation">{([['today','⌂','Today'],['track','＋','Track'],['calendar','□','Calendar'],['insights','⌁','Insights'],['circle','♡','Circle']] as const).map(([key, icon, label]) => <button key={key} className={tab === key ? 'active' : ''} onClick={() => setTab(key)} aria-current={tab === key ? 'page' : undefined}><span>{icon}</span>{label}</button>)}</nav>
 
-function CheckIn({
-  value,
-  onSave,
-  compact = false
-}: {
-  value?: DailyCheckIn
-  onSave: (v: DailyCheckIn) => void
-  compact?: boolean
-}) {
-  const [draft, setDraft] = useState<DailyCheckIn>(
-    value ?? {
-      date: today(),
-      symptoms: []
-    }
-  )
-
-  const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    setDraft(
-      value ?? {
-        date: today(),
-        symptoms: []
-      }
-    )
-
-    setSaved(false)
-  }, [value])
-
-  const updateDraft = (next: DailyCheckIn) => {
-    setDraft(next)
-    setSaved(false)
-  }
-
-  const choose = <T extends string>(
-    field: 'mood' | 'energy' | 'pain',
-    options: T[]
-  ) => {
-    return (
-      <div className="choices">
-        {options.map(option => (
-          <button
-            type="button"
-            key={option}
-            className={
-              draft[field] === option
-                ? 'selected'
-                : ''
-            }
-            onClick={() =>
-              updateDraft({
-                ...draft,
-                [field]: option
-              })
-            }
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-    )
-  }
-
-  const saveCheckIn = () => {
-    onSave(draft)
-    setSaved(true)
-  }
-
-  return (
-    <section className="card checkin">
-      <div className="section-title">
-        <div>
-          <h2>
-            {compact
-              ? 'How are you feeling?'
-              : "Today's check-in"}
-          </h2>
-
-          <p>
-            Only add what feels useful.
-          </p>
-        </div>
-      </div>
-
-      <label>
-        Mood
-        {choose<Mood>('mood', [
-          'Great',
-          'Good',
-          'Okay',
-          'Low',
-          'Difficult'
-        ])}
-      </label>
-
-      <label>
-        Energy
-        {choose<Energy>('energy', [
-          'High',
-          'Good',
-          'Moderate',
-          'Low',
-          'Very low'
-        ])}
-      </label>
-
-      <label>
-        Pain
-        {choose<Pain>('pain', [
-          'None',
-          'Mild',
-          'Moderate',
-          'Strong',
-          'Severe'
-        ])}
-      </label>
-
-      {!compact && (
-        <label>
-          Symptoms
-
-          <div className="choices">
-            {symptoms.map(symptom => (
-              <button
-                type="button"
-                key={symptom}
-                className={
-                  draft.symptoms.includes(symptom)
-                    ? 'selected'
-                    : ''
-                }
-                onClick={() =>
-                  updateDraft({
-                    ...draft,
-                    symptoms: draft.symptoms.includes(
-                      symptom
-                    )
-                      ? draft.symptoms.filter(
-                          item => item !== symptom
-                        )
-                      : [
-                          ...draft.symptoms,
-                          symptom
-                        ]
-                  })
-                }
-              >
-                {symptom}
-              </button>
-            ))}
-          </div>
-        </label>
-      )}
-
-      <label className="text-label">
-        A note
-
-        <textarea
-          value={draft.note ?? ''}
-          onChange={event =>
-            updateDraft({
-              ...draft,
-              note: event.target.value
-            })
-          }
-          placeholder="Anything you'd like to remember?"
-        />
-      </label>
-
-      <button
-        type="button"
-        className="primary"
-        onClick={saveCheckIn}
-      >
-        {saved
-          ? '✓ Check-in saved'
-          : 'Save check-in'}
-      </button>
-
-      {saved && (
-        <p
-          className="feedback"
-          role="status"
-          aria-live="polite"
-        >
-          ✓ Your daily check-in has been saved on this
-          device.
-        </p>
-      )}
-    </section>
-  )
+function CheckIn({ value, onSave, compact = false }: { value?: DailyCheckIn; onSave: (v: DailyCheckIn) => void; compact?: boolean }) {
+  const [draft, setDraft] = useState<DailyCheckIn>(value ?? { date: today(), symptoms: [] })
+  useEffect(() => setDraft(value ?? { date: today(), symptoms: [] }), [value])
+  const choose = <T extends string>(field: 'mood' | 'energy' | 'pain', options: T[]) => <div className="choices">{options.map(o => <button type="button" key={o} className={draft[field] === o ? 'selected' : ''} onClick={() => setDraft({ ...draft, [field]: o })}>{o}</button>)}</div>
+  return <section className="card checkin"><div className="section-title"><div><h2>{compact ? 'How are you feeling?' : "Today's check-in"}</h2><p>Only add what feels useful.</p></div></div>
+    <label>Mood{choose<Mood>('mood', ['Great','Good','Okay','Low','Difficult'])}</label>
+    <label>Energy{choose<Energy>('energy', ['High','Good','Moderate','Low','Very low'])}</label>
+    <label>Pain{choose<Pain>('pain', ['None','Mild','Moderate','Strong','Severe'])}</label>
+    {!compact && <label>Symptoms<div className="choices">{symptoms.map(s => <button type="button" key={s} className={draft.symptoms.includes(s) ? 'selected' : ''} onClick={() => setDraft({ ...draft, symptoms: draft.symptoms.includes(s) ? draft.symptoms.filter(x => x !== s) : [...draft.symptoms, s] })}>{s}</button>)}</div></label>}
+    <label className="text-label">A note <textarea value={draft.note ?? ''} onChange={e => setDraft({...draft, note: e.target.value})} placeholder="Anything you'd like to remember?" /></label>
+    <button className="primary" onClick={() => onSave(draft)}>Save check-in</button>
+  </section>
 }
 
 function Today({ data, setTab, save }: {data: CareData; setTab:(t:Tab)=>void; save:(x:CareData)=>void}) {
@@ -317,6 +138,34 @@ const welcomeStyles = `
 }
 .welcome-button {
   width: 100%;
+}
+
+/* Dark-mode readability */
+html[data-theme="dark"] .welcome-popup {
+  background: #211d25;
+  color: #f7f1f5;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .55);
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+html[data-theme="dark"] .welcome-popup h2 {
+  color: #fff8fc;
+}
+html[data-theme="dark"] .welcome-popup p {
+  color: #ddd3db;
+}
+html[data-theme="dark"] .welcome-popup .eyebrow {
+  color: #e8b8c9;
+}
+html[data-theme="dark"] .welcome-note {
+  background: rgba(236, 180, 197, .13);
+  color: #f2dce5;
+  border: 1px solid rgba(236, 180, 197, .12);
+}
+html[data-theme="dark"] .welcome-close {
+  color: #f7f1f5;
+}
+html[data-theme="dark"] .welcome-close:hover {
+  background: rgba(255,255,255,.08);
 }
 .welcome-close {
   position: absolute;
