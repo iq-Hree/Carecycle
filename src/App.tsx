@@ -68,4 +68,113 @@ function Circle({data,save}:{data:CareData;save:(x:CareData)=>void}) { const [fo
 function Privacy({data,save}:{data:CareData;save:(x:CareData)=>void}) { const [profile,setProfile]=useState(data.profile??{name:'',mobile:'',emergencyMobile:''}); const [confirm,setConfirm]=useState(false); const [notice,setNotice]=useState(''); const reminder=async(enabled:boolean)=>{try{await setDailyCheckInReminder(enabled);save({...data,settings:{...data.settings,notifications:enabled}});setNotice(enabled?'A local 7 PM reminder is set.':'Local reminder turned off.')}catch{setNotice('Your device did not allow notifications. No reminder was set.')}}; return <><header><div><span className="eyebrow">YOUR CONTROL</span><h1>Privacy & profile</h1></div></header><section className="privacy-hero"><b>Your data stays on this device.</b><p>No account, CareCycle cloud, advertising, analytics, or AI. Sharing happens only when you choose it.</p></section><section className="card"><h2>Local profile</h2><label>Name<input value={profile.name} onChange={e=>setProfile({...profile,name:e.target.value})}/></label><label>Mobile number<input inputMode="tel" value={profile.mobile} onChange={e=>setProfile({...profile,mobile:e.target.value})}/></label><label>Emergency contact number<input inputMode="tel" placeholder="e.g. +8801XXXXXXXXX" value={profile.emergencyMobile??''} onChange={e=>setProfile({...profile,emergencyMobile:e.target.value})}/><small>Used only when you press the emergency call button. It opens your phone's normal dialer/call action.</small></label><button className="primary" onClick={()=>save({...data,profile})}>Save profile</button></section><section className="card"><h2>Your data</h2><p>Exported files can contain sensitive health information. Store them carefully.</p><div className="actions"><button className="outline" onClick={()=>downloadData(data,'json')}>Export JSON</button><button className="outline" onClick={()=>downloadData(data,'csv')}>Export CSV</button></div><button className="danger" onClick={()=>setConfirm(true)}>Delete all local data</button>{confirm&&<div className="confirm"><p>This permanently removes CareCycle data on this device. It cannot remove anything you already shared or exported.</p><div className="actions"><button className="outline" onClick={()=>setConfirm(false)}>Cancel</button><button className="danger" onClick={()=>save(blankData())}>Delete data</button></div></div>}</section><section className="card"><h2>Notifications & app lock</h2><p>Reminders are scheduled only on this device. CareCycle does not send push notifications.</p><label className="switch"><input type="checkbox" checked={data.settings.notifications} onChange={e=>void reminder(e.target.checked)}/><span>Local daily check-in reminder</span></label>{notice&&<p className="feedback">{notice}</p>}<label className="switch"><input type="checkbox" checked={data.settings.appLock} onChange={e=>save({...data,settings:{...data.settings,appLock:e.target.checked}})}/><span>Use device authentication when available</span></label><p className="notice">App lock needs a native biometric provider configured for the final Android/iOS release. It never uses a CareCycle password or server.</p></section><section className="card"><h2>Appearance</h2><p>Choose how CareCycle looks on this device.</p><div className="choices"><button className={data.settings.theme!=='dark'?'selected':''} onClick={()=>save({...data,settings:{...data.settings,theme:'light'}})}>☀ Light</button><button className={data.settings.theme==='dark'?'selected':''} onClick={()=>save({...data,settings:{...data.settings,theme:'dark'}})}>☾ Dark</button></div></section><section className="card about"><h2>About CareCycle</h2><p>Version 0.1.0 · Open-source privacy-first tracking.</p><p>CareCycle cannot control information after it is sent through another app, copied, captured in a screenshot, or exported.</p></section></> }
 function template(request:string,name:string) { const t:Record<string,string>={'Check on me':`Hi ${name}, could you check in on me when you have a moment?`,'Menstrual supplies':`Hi ${name}, I could use some menstrual supplies today. Could you help me get some?`,'Someone to talk to':`Hi ${name}, I'm having a difficult day and would appreciate someone to talk to.`,'Help getting home':`Hi ${name}, I could use some help getting home. Are you available?`,'Health update':`Hi ${name}, I wanted to let you know I'm not feeling my best today.`,'Custom request':`Hi ${name}, `}; return t[request] }
 function Onboarding({done}:{done:()=>void}) { return <main className="onboarding"><div className="mark">◌</div><span className="eyebrow">CARE CYCLE</span><h1>Track privately.<br/>Share safely.<br/>Get support.</h1><p>CareCycle keeps your information on your device. No account, no cloud health database, no advertising, no tracking, and no AI.</p><div className="privacy-list"><span>✓ Your data stays local</span><span>✓ You choose what to share</span><span>✓ Your health history is yours</span></div><button className="primary" onClick={done}>Continue privately</button><small>You can manage your data, export it, or delete it at any time.</small></main> }
-export default function App(){const [data,setData]=useState<CareData|null>(null);const[tab,setTab]=useState<Tab>('today');const[history,setHistory]=useState<Tab[]>([]);useEffect(()=>{repository.load().then(setData)},[]);useEffect(()=>{if(data) document.documentElement.dataset.theme=data.settings.theme==='dark'?'dark':'light'},[data?.settings.theme]);const navigate=(next:Tab)=>{if(next===tab)return;setHistory(h=>[...h,tab]);setTab(next)};const goBack=()=>{setHistory(h=>{const next=h[h.length-1]??'today';setTab(next);return h.slice(0,-1)})};useEffect(()=>{const sub=CapacitorApp.addListener('backButton',({canGoBack})=>{if(history.length>0)goBack();else if(tab!=='today')setTab('today');else if(canGoBack)CapacitorApp.exitApp()});return()=>{sub.then(x=>x.remove())}},[history,tab]);const save=(next:CareData)=>{setData(next);repository.save(next)}; if(!data)return <main className="loading">Opening your private space…</main>;if(!data.settings.onboarded)return <Onboarding done={()=>save({...data,settings:{...data.settings,onboarded:true}})}/>;return <main className="app"><div className="content">{tab!=='today'&&<button className="back-button" onClick={goBack} aria-label="Go back">← Back</button>}{tab==='today'&&<Today data={data} setTab={navigate} save={save}/>} {tab==='track'&&<Track data={data} save={save}/>} {tab==='calendar'&&<Calendar data={data}/>} {tab==='insights'&&<Insights data={data}/>} {tab==='circle'&&<Circle data={data} save={save}/>} {tab==='privacy'&&<Privacy data={data} save={save}/>}</div>{tab!=='privacy'&&<Nav tab={tab} setTab={navigate}/>}</main>}
+
+function WelcomePopup({ onClose }: { onClose: () => void }) {
+  return <div className="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div className="welcome-popup">
+      <button className="welcome-close" onClick={onClose} aria-label="Close welcome message">×</button>
+      <div className="welcome-icon" aria-hidden="true">🌷</div>
+      <span className="eyebrow">A LITTLE REMINDER</span>
+      <h2 id="welcome-title">Be gentle with yourself today</h2>
+      <p>Your health matters, and you don't have to have everything figured out. Listen to your body, take the rest you need, and remember that it's okay to have slower days.</p>
+      <div className="welcome-note">♡ You deserve care, patience, and kindness.</div>
+      <button className="primary welcome-button" onClick={onClose}>Thank you 💗</button>
+    </div>
+  </div>
+}
+
+const welcomeStyles = `
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(24, 20, 28, .38);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  animation: welcomeFade .28s ease both;
+}
+.welcome-popup {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 30px 26px 24px;
+  border-radius: 28px;
+  background: var(--card, #fff);
+  box-shadow: 0 24px 70px rgba(20, 15, 30, .22);
+  text-align: center;
+  animation: welcomePop .42s cubic-bezier(.2,.85,.25,1.2) both;
+}
+.welcome-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(236, 180, 197, .18);
+  font-size: 30px;
+  animation: welcomeFloat 2.8s ease-in-out infinite;
+}
+.welcome-popup .eyebrow {
+  display: block;
+  margin-bottom: 7px;
+}
+.welcome-popup h2 {
+  margin: 0 18px 10px;
+}
+.welcome-popup p {
+  margin: 0 auto 17px;
+  max-width: 350px;
+  line-height: 1.65;
+}
+.welcome-note {
+  margin: 0 auto 20px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: rgba(236, 180, 197, .12);
+  font-size: .92rem;
+}
+.welcome-button {
+  width: 100%;
+}
+.welcome-close {
+  position: absolute;
+  top: 11px;
+  right: 13px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .65;
+  transition: transform .18s ease, opacity .18s ease, background .18s ease;
+}
+.welcome-close:hover {
+  opacity: 1;
+  transform: rotate(8deg) scale(1.05);
+  background: rgba(0,0,0,.05);
+}
+@keyframes welcomeFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes welcomePop {
+  from { opacity: 0; transform: translateY(18px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes welcomeFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome-overlay, .welcome-popup, .welcome-icon {
+    animation: none !important;
+  }
+}
+`
+export default function App(){const [data,setData]=useState<CareData|null>(null);const[tab,setTab]=useState<Tab>('today');const[history,setHistory]=useState<Tab[]>([]);const[welcomeOpen,setWelcomeOpen]=useState(false);useEffect(()=>{repository.load().then(loaded=>{setData(loaded);if(loaded.settings.onboarded)setWelcomeOpen(true)})},[]);useEffect(()=>{if(data) document.documentElement.dataset.theme=data.settings.theme==='dark'?'dark':'light'},[data?.settings.theme]);const navigate=(next:Tab)=>{if(next===tab)return;setHistory(h=>[...h,tab]);setTab(next)};const goBack=()=>{setHistory(h=>{const next=h[h.length-1]??'today';setTab(next);return h.slice(0,-1)})};useEffect(()=>{const sub=CapacitorApp.addListener('backButton',({canGoBack})=>{if(history.length>0)goBack();else if(tab!=='today')setTab('today');else if(canGoBack)CapacitorApp.exitApp()});return()=>{sub.then(x=>x.remove())}},[history,tab]);const save=(next:CareData)=>{setData(next);repository.save(next)}; if(!data)return <main className="loading">Opening your private space…</main>;if(!data.settings.onboarded)return <Onboarding done={()=>save({...data,settings:{...data.settings,onboarded:true}})}/>;return <main className="app"><style>{welcomeStyles}</style><div className="content">{tab!=='today'&&<button className="back-button" onClick={goBack} aria-label="Go back">← Back</button>}{tab==='today'&&<Today data={data} setTab={navigate} save={save}/>} {tab==='track'&&<Track data={data} save={save}/>} {tab==='calendar'&&<Calendar data={data}/>} {tab==='insights'&&<Insights data={data}/>} {tab==='circle'&&<Circle data={data} save={save}/>} {tab==='privacy'&&<Privacy data={data} save={save}/>}</div>{tab!=='privacy'&&<Nav tab={tab} setTab={navigate}/>} {welcomeOpen&&<WelcomePopup onClose={()=>setWelcomeOpen(false)}/>}</main>}
