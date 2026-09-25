@@ -123,4 +123,34 @@ nav .active span{animation:navHop .5s ease}
 .onboarding>*:nth-child(7){animation-delay:.7s}
 .loading{animation:softPulse 1.6s ease-in-out infinite}
 
+/* Fix: in dark mode the ".choices button" dark override was more specific
+   than ".choices .selected", so a selected mood/flow chip looked identical
+   to an unselected one. Give selected its own, more specific dark rule. */
+:root[data-theme="dark"] .choices .selected{background:#3a3160;border-color:#a78bd1;color:#f1ecff}
+
+/* A clear, theme-independent "you tapped this" flash, triggered on every
+   button click (see main.tsx) so feedback never depends on how briefly the
+   button was pressed or on button/background colors matching in dark mode. */
+button{position:relative}
+button.tap-flash::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:currentColor;opacity:0;animation:tapRipple .42s ease-out}
+@keyframes tapRipple{0%{opacity:.28;transform:scale(.94)}100%{opacity:0;transform:scale(1.03)}}
+button.tap-flash{transform:scale(.95)}
+
+/* Welcome-back comfort message */
+.welcome{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:22px;background:rgba(16,23,34,.55);backdrop-filter:blur(3px);animation:fadeIn .35s ease}
+.welcome.leaving{animation:fadeOut .4s ease forwards}
+.welcome-card{background:#fff;color:#182b46;border-radius:24px;padding:28px 24px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 50px #0003;animation:welcomeIn .45s cubic-bezier(.2,.8,.2,1)}
+.welcome-drop{width:56px;height:63px;margin:0 auto 14px}
+.welcome-drop svg{width:100%;height:100%;animation:bob 3.4s ease-in-out infinite}
+.welcome-hello{font-weight:800;letter-spacing:.3px;color:#7966a6;margin-bottom:6px;font-size:13px;text-transform:uppercase}
+.welcome-card h1{font-size:21px;line-height:1.35;margin:0 0 20px;color:#182b46}
+.welcome-card .primary{margin-bottom:8px}
+.welcome-card small{color:#8a93a3;font-size:12px}
+:root[data-theme="dark"] .welcome-card{background:#182333;color:#e7edf5}
+:root[data-theme="dark"] .welcome-card h1{color:#e7edf5}
+:root[data-theme="dark"] .welcome-card small{color:#8896aa}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes welcomeIn{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
